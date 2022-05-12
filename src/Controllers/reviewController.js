@@ -1,6 +1,8 @@
 const reviewModel = require("../Models/reviewModel")
 const bookModel = require("../Models/bookModel")
-const { ConnectionPoolClosedEvent } = require("mongodb")
+const mongoose = require('mongoose')
+
+
 
 const isValid = function (value) {
     if (typeof value === 'undefined' || value === null) return false
@@ -8,10 +10,15 @@ const isValid = function (value) {
     return true
 }
 
+const isValidObjectId = function(ObjectId){
+    return mongoose.Types.ObjectId.isValid(ObjectId)
+}
+
 const isValidRequestBody = function (request) {
     return (Object.keys(request).length > 0)
 }
 
+const ratingRegex = /^[1-5]$/
 
 const createReview = async function (req, res) {
     try {
@@ -20,21 +27,27 @@ const createReview = async function (req, res) {
         let { reviewedBy, rating, review } = requestBody
 
         if (!isValidRequestBody(requestBody)) return res.status(400).send({ status: false, message: "Invalid request parameters.Please provide review details" })
+
+        if (!isValidObjectId(bookId)) return res.status(400).send({ status: false, message: "Please provide valid book Id" })
+
         if (!isValid(reviewedBy)) return res.status(400).send({ status: false, message: "Reviewer detail is required." })
 
         if (!isValid(rating)) return res.status(400).send({ status: false, message: "Rating is required." })
 
+        if (!ratingRegex.test(rating)) return res.status(400).send({ status: false, message: " Rating should be on a scale of 1-5." })
+
         if (!isValid(review)) return res.status(400).send({ status: false, message: "Review is required." })
 
-        // if (!bookId == bookModel._id)
-        //     return res.status(400).send({ status: false, message: "No such document is exist with this Id or it maybe deleted" })
 
-        // const findBook = await bookModel.findOne({ _id: bookId, isDeleted: false })
-        // if (!findBook) return res.status(404).send({ status: false, message: "No document found or it maybe deleted" })
+        const findBook = await bookModel.findOne({ _id: bookId, isDeleted: false })
+        if (!findBook) return res.status(404).send({ status: false, message: "No document found with this book Id or it maybe deleted" })
 
-        // const newReview = await reviewModel.findOneAndUpdate({ _Id: bookId }, { ...requestBody }, { $inc: { review: 1 }},{new:true}) //review:+1
+        const  filterReview = {bookId:bookId, reviewedBy:reviewedBy,rating:rating,review:review,reviewedAt:Date.now()}
 
-        const newReview = await reviewModel.create(requestBody)
+        const newReview = await reviewModel.create(filterReview)
+
+        await bookModel.findOneAndUpdate({ _id: bookId, isDeleted: false },{ $inc: { review: 1 }},{new:true}) //review:+1
+
         return res.status(201).send({ status: true, message: "new review created successfully", data: newReview })
 
     }
@@ -43,4 +56,75 @@ const createReview = async function (req, res) {
     }
 }
 
+const updateReview = async function (req, res) {
+    try {
+        let bookId = req.params.bookId
+        let reviewId = req.params.reviewId
+
+        let data = req.body
+
+        if (!isValidRequestBody(data)) return res.status(400).send({ status: false, message: "Invalid request parameters.Please provide the fields that you want to update" })
+
+        if (!isValidObjectId(bookId)) return res.status(400).send({ status: false, message: "Please provide valid book Id" })
+
+        if (!isValidObjectId(reviewId)) return res.status(400).send({ status: false, message: "Please provide valid review Id" })
+
+
+        const findBook = await bookModel.findOne({ _id: bookId, isDeleted: false })
+        if (!findBook) return res.status(404).send({ status: false, message: "No book document found or it maybe deleted" })
+
+        const findReview = await reviewModel.findOne({ _id: reviewId, isDeleted: false })
+        if (!findReview) return res.status(404).send({ status: false, message: "No review document found or it maybe deleted" })
+
+
+        const updatedReview = await reviewModel.findOneAndUpdate({ _id: reviewId },{reviewedBy:data.reviewedBy,rating:data.rating, review:data.review, updatedAt: Date.now()},{ new: true })
+
+        const bookWithReview = findBook.toObject()
+        bookWithReview ["reviewsData"] = updatedReview
+
+
+
+        return res.status(200).send({ status: true, message: "successfully updated", data: bookWithReview })
+
+
+    }
+    catch (err) {
+        return res.status(500).send({ status: false, message: "error", error: err.message })
+    }
+}
+
+const deleteReview = async function(req,res){
+    try{
+        let bookId = req.params.bookId
+        let reviewId = req.param.reviewId
+
+        if (!isValid(bookId)) return res.status(400).send({ status: false, message: "book Id is required." })
+
+        if (!isValid(reviewId)) return res.status(400).send({ status: false, message: "Review Id is required." })
+
+        if (!isValidObjectId(bookId)) return res.status(400).send({ status: false, message: "Please provide valid book Id" })
+
+        if (!isValidObjectId(reviewId)) return res.status(400).send({ status: false, message: "Please provide valid review Id" })
+
+
+        const findBook = await bookModel.findOne({_id : bookId, isDeleted:false})
+        if(!findBook) return res.status(404).send({status:false, message:"No document found with this Id"})
+
+        const findReview = await reviewModel.findOne({_id:reviewId, isDeleted: false})
+        if(!findReview) return res.status(404).send({status:false, message:"No document found with this Id"})
+
+        const deletedReview = await reviewModel.findOneAndUpdate({_id:reviewId, bookId:bookId},{$set:{isDeleted:true}},{new:true})
+        await bookModel.findOneAndUpdate({ _id: bookId, isDeleted: false },{ $inc: { review: -1 }},{new:true}) //review:-1
+
+
+        return res.status(200).send({status:true, message:"Review deleted successfully", data:deletedReview})
+
+    }
+     catch (err) {
+        return res.status(500).send({ status: false, message: "error", error: err.message })
+    }
+}
+
 module.exports.createReview = createReview
+module.exports.updateReview = updateReview
+module.exports.deleteReview = deleteReview

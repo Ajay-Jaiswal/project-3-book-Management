@@ -16,13 +16,15 @@ router.post("/register",userController.createUser)
 router.post("/login",userController.loginUser)
 
 
-router.post("/books", bookController.createBook)
+router.post("/books",mid.authentication, bookController.createBook)
 router.get("/books",mid.authentication, bookController.getBooks)
 router.get("/books/:bookId", mid.authentication, mid.authorization, bookController.getBookReviews)
 router.put("/books/:bookId", mid.authentication, mid.authorization, bookController.updateBook)
 router.delete("/books/:bookId", mid.authentication, mid.authorization, bookController.deleteBook)
 
 router.post("/books/:bookId/review", reviewController.createReview)
+router.put("/books/:bookId/review/:reviewId", reviewController.updateReview)
+router.delete("/books/:bookId/review/:reviewId",reviewController.deleteReview)
 
 
 module.exports = router
