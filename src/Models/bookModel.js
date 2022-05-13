@@ -50,7 +50,6 @@ const bookSchema = new mongoose.Schema({
     releasedAt: {
         type: Date, 
         required: [true, "Book release date is required"], 
-        format: ("YYYY-MM-DD")
     }
 
 },{timestamps:true})

@@ -2,7 +2,7 @@ const mongoose = require("mongoose")
 const bookModel = require("../Models/bookModel")
 const reviewModel = require("../Models/reviewModel")
 const userModel = require("../Models/userModel")
-const ObjectId = mongoose.Types.ObjectId
+
 
 const isValid = function (value) {
     if (typeof value === 'undefined' || value === null) return false
@@ -25,7 +25,7 @@ const ISBNRegex = /^(?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+$/
 const createBook = async function (req, res) {
     try {
         let bookData = req.body
-        let { title, excerpt, userId, ISBN, category, subcategory, reviews, releasedAt } = bookData
+        let { title, excerpt, userId, ISBN, category, subcategory } = bookData
 
         if (!isValidRequestBody(bookData)) return res.status(400).send({ status: false, message: "No input by user.." })
 
@@ -35,8 +35,6 @@ const createBook = async function (req, res) {
         if (!isValid(ISBN)) return res.status(400).send({ status: false, message: "ISBN number is required." })
         if (!isValid(category)) return res.status(400).send({ status: false, message: "Category is required." })
         if (!isValid(subcategory)) return res.status(400).send({ status: false, message: "Subcategory is required." })
-        if (!isValid(reviews)) return res.status(400).send({ status: false, message: "Reviews is required." })
-        if (!isValid(releasedAt)) return res.status(400).send({ status: false, message: "Release date is required." })
 
         if (!titleRegex.test(title)) return res.status(400).send({ status: false, message: " Please provide valid title including characters only." })
 
@@ -57,7 +55,7 @@ const createBook = async function (req, res) {
         if (duplicateISBN)
             return res.status(400).send({ status: false, message: "ISBN already exists" })
 
-        let newBookData = { title, excerpt, userId, ISBN, category, subcategory, reviews, releasedAt }
+        let newBookData = { title:title, excerpt:excerpt, userId:userId, ISBN:ISBN, category:category, subcategory:subcategory, releasedAt: Date.now()}
 
         const newBook = await bookModel.create(newBookData)
         return res.status(201).send({ status: true, message: "New book created sucessfully", data: newBook })
@@ -74,11 +72,11 @@ const getBooks = async function (req, res) {
 
 
         let query = req.query
-        // let userId = req.query.userId 
-        let { userId, category, subcategory } = query
+        let userId = req.query.userId 
+
+        // let { userId, category, subcategory } = query
 
         //filter
-
 
         if (!isValidRequestBody(query))
             return res.status(400).send({ status: false, message: "No query inputs by user." })
@@ -86,8 +84,13 @@ const getBooks = async function (req, res) {
         if (!(isValid(userId) && isValidObjectId(userId)))
             return res.status(400).send({ status: false, message: "Invalid user Id." })
 
+        const findUser = await userModel.findOne({_id:userId, isDeleted:false})
 
-        const getbookdata = await bookModel.find({ userId: userId, isDeleted: false }).select({ _id: 1, title: 1, excerpt: 1, userId: 1, category: 1, releasedAt: 1 }).sort({ title: 1 })
+        if (!findUser) return res.status(404).send({ status: false, message: "No user found with this Id" })
+
+
+        const getbookdata = await bookModel.find({ userId: userId, isDeleted: false }).select({ _id: 1, title: 1, excerpt: 1, userId: 1, category: 1,reviews:1, releasedAt: 1 }).sort({ title: 1 })
+
         if (getbookdata.length === 0) return res.status(404).send({ status: false, message: "No document found or it maybe deleted" })
 
         return res.status(200).send({ status: true, message: "Books list", data: getbookdata })

@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 const bookModel = require("../Models/bookModel");
 
+const tokenRegex = /^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$/
+
 const authentication = async function(req,res,next){
     try{
         let token  = (req.headers["x-api-key"])
@@ -10,13 +12,18 @@ const authentication = async function(req,res,next){
         return res.status(400).send({status: false, msg: "Token must be present",});
         }
 
+        if (!tokenRegex.test(token)) 
+        return res.status(400).send({ status: false, message: "Please provide a valid email address." })
+
         let decodedToken = jwt.verify(token, secretKey)
 
         if(!decodedToken){
         return res.status(400).send({status: false, msg: "Authentication error"});
         }
+
+         
         let userLoggedIn = decodedToken.userId
-        req["userId"] = userLoggedIn
+        req.query["userId"] = userLoggedIn
 
         next()
 

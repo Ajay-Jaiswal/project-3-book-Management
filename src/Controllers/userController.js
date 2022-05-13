@@ -9,14 +9,15 @@ const mobileRegex = /^[6-9]\d{9}$/                // /^[0-9]{10}$/  <--Only veri
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,15}$/
 
-const tokenRegex = /^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$/
-
 const pincodeRegex = /^[1-9]{1}[0-9]{2}\s{0,1}[0-9]{3}$/
+
+
 
 
 const isValid = function (value) {
     if (typeof value === 'undefined' || value === null) return false
     if (typeof value === 'string' && value.trim().length === 0) return false
+    //if(typeof value !== 'string') return false
     return true
 }
 
@@ -74,7 +75,7 @@ const createUser = async function(req, res){
         return res.status(400).send({ status: false, message: "Please provide a valid email address." })
 
         if (!mobileRegex.test(phone)) 
-        return res.status(400).send({ status: false, message: "Please provide a valid phone number. Phone number should start 6-9." })
+        return res.status(400).send({ status: false, message: "Please provide a valid 10 digits phone number. Phone number should start 6-9." })
 
         if (!passwordRegex.test(password)) 
         return res.status(400).send({ status: false, message: "Password is not strong enough.Please provide a password of minimum length of 8 characters containing 1 Uppercase, 1 lowecase, 1 special symbole and number " })
