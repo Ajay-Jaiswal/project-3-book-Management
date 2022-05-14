@@ -13,7 +13,7 @@ const authentication = async function(req,res,next){
         }
 
         if (!tokenRegex.test(token)) 
-        return res.status(400).send({ status: false, message: "Please provide a valid email address." })
+        return res.status(400).send({ status: false, message: "Please provide a token." })
 
         let decodedToken = jwt.verify(token, secretKey)
 
@@ -21,9 +21,9 @@ const authentication = async function(req,res,next){
         return res.status(400).send({status: false, msg: "Authentication error"});
         }
 
-         
+         let userId = req.query.userId
         let userLoggedIn = decodedToken.userId
-        req.query["userId"] = userLoggedIn
+        userId = userLoggedIn
 
         next()
 

@@ -71,29 +71,29 @@ const getBooks = async function (req, res) {
     try {
 
 
-        let query = req.query
-        let userId = req.query.userId 
+        let data = req.query
+        let { userId, category, subcategory } = data
+        
 
-        // let { userId, category, subcategory } = query
-
-        //filter
-
-        if (!isValidRequestBody(query))
-            return res.status(400).send({ status: false, message: "No query inputs by user." })
-
-        if (!(isValid(userId) && isValidObjectId(userId)))
-            return res.status(400).send({ status: false, message: "Invalid user Id." })
-
-        const findUser = await userModel.findOne({_id:userId, isDeleted:false})
-
-        if (!findUser) return res.status(404).send({ status: false, message: "No user found with this Id" })
+        let filter = { isDeleted: false }
 
 
-        const getbookdata = await bookModel.find({ userId: userId, isDeleted: false }).select({ _id: 1, title: 1, excerpt: 1, userId: 1, category: 1,reviews:1, releasedAt: 1 }).sort({ title: 1 })
+        if (isValid(userId) && isValidRequestBody(userId)) {
+            filter["userId"] = userId
+        }
+        if (isValid(category)) {
+            filter["category"] = category
+        }
+        if (isValid(subcategory)) {
+            filter["subcategory"] = subcategory
+        }
+        
+        let books = await bookModel.find(filter).select({ _id: 1, title: 1, excerpt: 1, userId: 1, category: 1,reviews:1, releasedAt: 1 }).sort({ title: 1 })
 
-        if (getbookdata.length === 0) return res.status(404).send({ status: false, message: "No document found or it maybe deleted" })
+        if(books && books.length === 0)
+        return res.status(404).send({ status: false, msg: "no such document exist or it maybe deleted" })
 
-        return res.status(200).send({ status: true, message: "Books list", data: getbookdata })
+        return res.status(200).send({ status: true, msg: "Book list accessed successfully", data: books })
 
 
     }

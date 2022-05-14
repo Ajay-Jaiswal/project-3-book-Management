@@ -30,7 +30,6 @@ const createReview = async function (req, res) {
 
         if (!isValidObjectId(bookId)) return res.status(400).send({ status: false, message: "Please provide valid book Id" })
 
-        // if (!isValid(reviewedBy)) return res.status(400).send({ status: false, message: "Reviewer detail is required." })
 
         if (!isValid(rating)) return res.status(400).send({ status: false, message: "Rating is required." })
 
@@ -46,7 +45,7 @@ const createReview = async function (req, res) {
 
         const newReview = await reviewModel.create(filterReview)
 
-        await bookModel.findOneAndUpdate({ _id: bookId, isDeleted: false },{ $inc: { reviews: +1 }},{updatedAt:Date.now()}) //review:+1
+        await bookModel.findOneAndUpdate({ _id: bookId, isDeleted: false },{ $inc: { reviews: +1 }},{updatedAt:Date.now()}) //reviews increament
 
         return res.status(201).send({ status: true, message: "new review created successfully", data: newReview })
 
