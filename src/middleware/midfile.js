@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bookModel = require("../Models/bookModel");
+mongoose = require("mongoose")
 
 const tokenRegex = /^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$/
 
@@ -25,7 +26,7 @@ const authentication = async function (req, res, next) {
         if (!decodedToken) {
             return res.status(401).send({ status: false, msg: "Authentication error" });
         }
-
+        req.decodedToken = decodedToken
 
         next()
 
@@ -40,10 +41,10 @@ const authentication = async function (req, res, next) {
 const authorization = async function (req, res, next) {
     try {
 
-        let userId = req.userId
-        let bookId = req.param.bookId
 
-        decodedToken = req.decodedToken
+        let bookId = req.params.bookId
+
+        let decodedToken = req.decodedToken
 
         if (!isValidObjectId(bookId)) return res.status(400).send({ status: false, message: "Please provide valid book Id" })
 
@@ -52,6 +53,8 @@ const authorization = async function (req, res, next) {
 
         if (!findBook)
             res.status(404).send({ status: false, msg: "No book found or it maybe deleted" });
+
+
 
         if (decodedToken.userId != findBook.userId) {
             next()
