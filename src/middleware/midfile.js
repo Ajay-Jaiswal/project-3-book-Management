@@ -3,58 +3,66 @@ const bookModel = require("../Models/bookModel");
 
 const tokenRegex = /^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$/
 
-const authentication = async function(req,res,next){
-    try{
-        let token  = (req.headers["x-api-key"])
+const isValidObjectId = function (ObjectId) {
+    return mongoose.Types.ObjectId.isValid(ObjectId)
+}
+
+const authentication = async function (req, res, next) {
+    try {
+        let token = (req.headers["x-api-key"])
         let secretKey = "Group41-book/management"
 
-        if (!token){
-        return res.status(400).send({status: false, msg: "Token must be present",});
+
+        if (!token) {
+            return res.status(400).send({ status: false, msg: "Token must be present", });
         }
 
-        if (!tokenRegex.test(token)) 
-        return res.status(400).send({ status: false, message: "Please provide a token." })
+        if (!tokenRegex.test(token))
+            return res.status(400).send({ status: false, message: "Please provide a valid token." })
 
         let decodedToken = jwt.verify(token, secretKey)
 
-        if(!decodedToken){
-        return res.status(400).send({status: false, msg: "Authentication error"});
+        if (!decodedToken) {
+            return res.status(401).send({ status: false, msg: "Authentication error" });
         }
 
-         let userId = req.query.userId
-        let userLoggedIn = decodedToken.userId
-        userId = userLoggedIn
 
         next()
 
+
     }
-    catch (err){
+    catch (err) {
         res.status(500).send({ msg: "Error", error: err.message })
     }
 
 }
 
-const authorization = async function(req,res,next){
-    try{
-        let bookId =req.param.bookId
+const authorization = async function (req, res, next) {
+    try {
 
-        let id = req.userId  //decodedToken = req.decodedToken
+        let userId = req.userId
+        let bookId = req.param.bookId
 
-        const findBook = await bookModel.findOne({_Id:bookId, isDeleted:false})
+        decodedToken = req.decodedToken
 
-        if(!findBook)
-        res.status(401).send({status: false, msg: "No book found or it maybe deleted"});
+        if (!isValidObjectId(bookId)) return res.status(400).send({ status: false, message: "Please provide valid book Id" })
 
-        if(id != findBook.userId){
+
+        const findBook = await bookModel.findOne({ _Id: bookId, isDeleted: false })
+
+        if (!findBook)
+            res.status(404).send({ status: false, msg: "No book found or it maybe deleted" });
+
+        if (decodedToken.userId != findBook.userId) {
             next()
-        }else{
-            res.status(401).send({status: false, msg: "user logged in is not allowed to modify or access the author data"});
+        } else {
+            res.status(401).send({ status: false, msg: "user logged in is not allowed to modify or access the author data" });
         }
     }
 
-catch (err){
-    res.status(500).send({ msg: "Error", error: err.message })
-}
+    catch (err) {
+        res.status(500).send({ msg: "Error", error: err.message })
+    }
 
 }
 

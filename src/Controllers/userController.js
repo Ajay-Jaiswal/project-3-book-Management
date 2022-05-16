@@ -41,6 +41,8 @@ const createUser = async function(req, res){
         let userData = req.body
         let {title, name, phone, email, password, address} = userData
 
+        //-----------------------------   validations start from here   ----------------------------------//
+
         if (!isValidRequestBody(userData)){ 
         return res.status(400).send({ status: false, message: "No input by user.." })
         }
@@ -81,10 +83,14 @@ const createUser = async function(req, res){
         return res.status(400).send({ status: false, message: "Password is not strong enough.Please provide a password of minimum length of 8 characters containing 1 Uppercase, 1 lowecase, 1 special symbole and number " })
 
         const duplicateEmail = await userModel.findOne({ email })
-        if (duplicateEmail) return res.status(400).send({ status: false, message: "Email address already exists. Please use another email address." })
+
+        if (duplicateEmail) 
+        return res.status(400).send({ status: false, message: "Email address already exists. Please use another email address." })
 
         const duplicatePhone = await userModel.findOne({ phone })
-        if (duplicatePhone) return res.status(400).send({ status: false, message: "Phone number already exists. Please use another phone number" })
+
+        if (duplicatePhone) 
+        return res.status(400).send({ status: false, message: "Phone number already exists. Please use another phone number" })
 
         const newUser = await userModel.create(userData)
         return res.status(201).send({status: true, message: "New User created successfully", data: newUser })
@@ -105,7 +111,7 @@ const loginUser = async function (req, res) {
 
 
     if(!isValidRequestBody(loginData)){
-        return res.status(400).send({status:false, msg : "Invalid request parameters.Please provide login details"})
+    return res.status(400).send({status:false, msg : "Invalid request parameters.Please provide login details"})
     }
 
     if(!isValid(email)){
@@ -113,7 +119,7 @@ const loginUser = async function (req, res) {
     }
 
     if(!(emailRegex.test(email))){
-        return res.status(400).send({status:false, msg:"E-mail should be a valid e-mail address"})
+    return res.status(400).send({status:false, msg:"E-mail should be a valid e-mail address"})
     }
 
     if(!isValid(password)){
@@ -124,6 +130,9 @@ const loginUser = async function (req, res) {
     if (!user){
       return res.status(401).send({status: false,msg: "Invalid login credenctial",});
     }
+
+    
+    
 
 let token = jwt.sign(
     {
