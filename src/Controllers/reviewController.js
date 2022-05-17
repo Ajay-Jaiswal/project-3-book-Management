@@ -7,6 +7,7 @@ const mongoose = require('mongoose')
 const isValid = function (value) {
     if (typeof value === 'undefined' || value === null) return false
     if (typeof value === 'string' && value.trim().length === 0) return false
+    if (typeof value === 'number' && value.toString().trim().length === 0) return false
     return true
 }
 
@@ -98,7 +99,7 @@ const updateReview = async function (req, res) {
 
         
 
-        const updatedReview = await reviewModel.findOneAndUpdate({ _id: reviewId },{reviewedBy:data.reviewedBy,rating:data.rating, review:data.review},{ new:true})
+        const updatedReview = await reviewModel.findOneAndUpdate({ _id: reviewId },{reviewedBy:data.reviewedBy,rating:data.rating, review:data.review},{ new:true,updatedAt: Date.now()})
 
 
         return res.status(200).send({ status: true, message: "successfully updated", data: updatedReview })
@@ -142,7 +143,7 @@ const deleteReview = async function(req,res){
 
         const deletedReview = await reviewModel.findOneAndUpdate({_id:reviewId, bookId:bookId},{$set:{isDeleted:true}},{new:true})
         
-        await bookModel.findOneAndUpdate({ _id: bookId, isDeleted: false },{ $inc: { reviews: -1 }},{new:true}) //review:-1
+        await bookModel.findOneAndUpdate({ _id: bookId, isDeleted: false },{ $inc: { reviews: -1 }},{updatedAt: Date.now()}) //review:-1
 
         
 

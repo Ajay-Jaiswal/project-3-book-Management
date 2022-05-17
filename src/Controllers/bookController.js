@@ -7,6 +7,7 @@ const userModel = require("../Models/userModel")
 const isValid = function (value) {
     if (typeof value === 'undefined' || value === null) return false
     if (typeof value === 'string' && value.trim().length === 0) return false
+    if (typeof value === 'number' && value.toString().trim().length === 0) return false
     return true
 }
 
@@ -192,6 +193,12 @@ const updateBook = async function (req, res) {
 
         if (!getbook) 
         return res.status(404).send({ status: false, message: "No document found or it maybe deleted" })
+
+        let duplicateTitle = await bookModel.findOne({title: requestBody.title})
+
+        if(duplicateTitle)
+        return res.status(400).send({ status: false, message: "The title you want to update is already updated" })
+
 
         const updateBook = await bookModel.findOneAndUpdate({ _id: bookId }, { title:requestBody.title, excerpt: requestBody.excerpt, releasedAt:requestBody.releasedAt, ISBN: requestBody.ISBN }, { new: true })
 

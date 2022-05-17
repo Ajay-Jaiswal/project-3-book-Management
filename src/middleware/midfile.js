@@ -8,6 +8,7 @@ const isValidObjectId = function (ObjectId) {
     return mongoose.Types.ObjectId.isValid(ObjectId)
 }
 
+
 const authentication = async function (req, res, next) {
     try {
         let token = (req.headers["x-api-key"])
@@ -56,7 +57,7 @@ const authorization = async function (req, res, next) {
 
 
 
-        if (decodedToken.userId != findBook.userId) {
+        if (decodedToken.userId = findBook.userId) {
             next()
         } else {
             res.status(401).send({ status: false, msg: "user logged in is not allowed to modify or access the author data" });
