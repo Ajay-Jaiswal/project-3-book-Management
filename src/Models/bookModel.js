@@ -40,6 +40,7 @@ const bookSchema = new mongoose.Schema({
         type : Number, 
         default: 0,         //// Holds number of reviews of this book
     },
+    bookcover:{type : String},
      
     isDeleted: {
         type: Boolean, 
